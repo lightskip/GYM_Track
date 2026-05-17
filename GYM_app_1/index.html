@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#e63946" />
+  <meta name="description" content="Personal gym training tracker" />
+  <title>GymTrack</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="dark">
+
+<!-- APP SHELL -->
+<div id="app">
+
+  <!-- TOP BAR -->
+  <header id="topbar">
+    <div class="topbar-left">
+      <span class="logo">💪 GymTrack</span>
+    </div>
+    <div class="topbar-right">
+      <button id="btn-dark-toggle" class="icon-btn" title="Toggle dark mode">🌙</button>
+      <button id="btn-settings" class="icon-btn" title="Settings">⚙️</button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT AREA -->
+  <main id="main-content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <section id="page-dashboard" class="page active">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <span id="dash-date" class="subtitle"></span>
+      </div>
+
+      <div class="card today-card">
+        <div class="card-title">Today's Workout</div>
+        <div id="dash-today"></div>
+        <button id="btn-start-today" class="btn btn-primary btn-lg" style="display:none">▶ Start Workout</button>
+        <button id="btn-log-new" class="btn btn-outline btn-lg">+ Log New Workout</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Recent Personal Records 🏆</div>
+        <div id="dash-prs" class="pr-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Last 7 Days</div>
+        <div id="dash-week" class="week-strip"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Quick Stats</div>
+        <div id="dash-stats" class="stats-grid"></div>
+      </div>
+    </section>
+
+    <!-- ===== LOG WORKOUT ===== -->
+    <section id="page-log" class="page">
+      <div class="page-header">
+        <h1>Log Workout</h1>
+      </div>
+
+      <div class="card">
+        <label class="field-label">Date</label>
+        <input type="date" id="log-date" class="input" />
+
+        <label class="field-label">Workout Name / Tag</label>
+        <div class="row-gap">
+          <input type="text" id="log-name" class="input" placeholder="e.g. Push Day, Leg Day…" />
+          <button id="btn-load-template" class="btn btn-outline">📋 Template</button>
+        </div>
+
+        <div class="tag-row" id="log-tags">
+          <span class="tag-chip selectable" data-tag="Push">Push</span>
+          <span class="tag-chip selectable" data-tag="Pull">Pull</span>
+          <span class="tag-chip selectable" data-tag="Legs">Legs</span>
+          <span class="tag-chip selectable" data-tag="Upper">Upper</span>
+          <span class="tag-chip selectable" data-tag="Lower">Lower</span>
+          <span class="tag-chip selectable" data-tag="Full Body">Full Body</span>
+          <span class="tag-chip selectable" data-tag="Cardio">Cardio</span>
+        </div>
+      </div>
+
+      <div id="log-exercises-container"></div>
+
+      <button id="btn-add-exercise" class="btn btn-outline btn-lg full-width">+ Add Exercise</button>
+
+      <div class="card">
+        <label class="field-label">Workout Notes</label>
+        <textarea id="log-notes" class="input textarea" placeholder="How did it feel? Any notes…" rows="3"></textarea>
+      </div>
+
+      <div class="action-row">
+        <button id="btn-save-workout" class="btn btn-primary btn-lg full-width">💾 Save Workout</button>
+      </div>
+    </section>
+
+    <!-- ===== HISTORY / CALENDAR ===== -->
+    <section id="page-history" class="page">
+      <div class="page-header">
+        <h1>History</h1>
+      </div>
+
+      <div class="card">
+        <div id="calendar-header" class="cal-header">
+          <button id="cal-prev" class="icon-btn">‹</button>
+          <span id="cal-month-label"></span>
+          <button id="cal-next" class="icon-btn">›</button>
+        </div>
+        <div id="calendar-grid" class="cal-grid"></div>
+      </div>
+
+      <div id="history-list" class="workout-list"></div>
+    </section>
+
+    <!-- ===== PROGRESS ===== -->
+    <section id="page-progress" class="page">
+      <div class="page-header">
+        <h1>Progress</h1>
+      </div>
+
+      <div class="card">
+        <label class="field-label">Exercise</label>
+        <div class="row-gap">
+          <input type="text" id="progress-search" class="input" placeholder="Search exercise…" autocomplete="off" />
+          <div id="progress-search-results" class="search-dropdown hidden"></div>
+        </div>
+        <div class="row-gap" style="margin-top:8px">
+          <select id="progress-metric" class="input select">
+            <option value="weight">Max Weight (kg)</option>
+            <option value="volume">Total Volume (kg)</option>
+            <option value="reps">Total Reps</option>
+          </select>
+          <select id="progress-range" class="input select">
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="180">Last 6 months</option>
+            <option value="365">Last year</option>
+            <option value="0">All time</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <canvas id="progress-chart" height="220"></canvas>
+      </div>
+
+      <div class="card" id="progress-stats-card">
+        <div class="card-title">Stats for <span id="progress-ex-name">—</span></div>
+        <div id="progress-stats" class="stats-grid"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Session History</div>
+        <div id="progress-history-list" class="ex-history-list"></div>
+      </div>
+    </section>
+
+    <!-- ===== PLAN ===== -->
+    <section id="page-plan" class="page">
+      <div class="page-header">
+        <h1>Weekly Plan</h1>
+        <button id="btn-new-template" class="btn btn-primary btn-sm">+ New Template</button>
+      </div>
+
+      <div id="templates-list"></div>
+    </section>
+
+    <!-- ===== EXERCISES DB ===== -->
+    <section id="page-exercises" class="page">
+      <div class="page-header">
+        <h1>Exercises</h1>
+        <button id="btn-new-exercise" class="btn btn-primary btn-sm">+ Add</button>
+      </div>
+
+      <div class="card">
+        <input type="text" id="ex-search" class="input" placeholder="Search exercises…" />
+        <div class="tag-row" id="ex-filter-tags" style="margin-top:8px">
+          <span class="tag-chip selectable active" data-tag="All">All</span>
+          <span class="tag-chip selectable" data-tag="Chest">Chest</span>
+          <span class="tag-chip selectable" data-tag="Back">Back</span>
+          <span class="tag-chip selectable" data-tag="Shoulders">Shoulders</span>
+          <span class="tag-chip selectable" data-tag="Arms">Arms</span>
+          <span class="tag-chip selectable" data-tag="Legs">Legs</span>
+          <span class="tag-chip selectable" data-tag="Core">Core</span>
+          <span class="tag-chip selectable" data-tag="Cardio">Cardio</span>
+          <span class="tag-chip selectable" data-tag="Custom">Custom</span>
+        </div>
+      </div>
+
+      <div id="exercises-list" class="exercises-grid"></div>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav id="bottom-nav">
+    <button class="nav-btn active" data-page="dashboard">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Home</span>
+    </button>
+    <button class="nav-btn" data-page="log">
+      <span class="nav-icon">✏️</span>
+      <span class="nav-label">Log</span>
+    </button>
+    <button class="nav-btn" data-page="history">
+      <span class="nav-icon">📅</span>
+      <span class="nav-label">History</span>
+    </button>
+    <button class="nav-btn" data-page="progress">
+      <span class="nav-icon">📈</span>
+      <span class="nav-label">Progress</span>
+    </button>
+    <button class="nav-btn" data-page="plan">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Plan</span>
+    </button>
+    <button class="nav-btn" data-page="exercises">
+      <span class="nav-icon">🏋️</span>
+      <span class="nav-label">Exercises</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Exercise Picker Modal -->
+<div id="modal-exercise-picker" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Pick Exercise</h2>
+      <button class="modal-close icon-btn">✕</button>
+    </div>
+    <input type="text" id="picker-search" class="input" placeholder="Search…" autocomplete="off" />
+    <div class="tag-row" id="picker-filter-tags" style="margin-top:8px">
+      <span class="tag-chip selectable active" data-tag="All">All</span>
+      <span class="tag-chip selectable" data-tag="Chest">Chest</span>
+      <span class="tag-chip selectable" data-tag="Back">Back</span>
+      <span class="tag-chip selectable" data-tag="Shoulders">Shoulders</span>
+      <span class="tag-chip selectable" data-tag="Arms">Arms</span>
+      <span class="tag-chip selectable" data-tag="Legs">Legs</span>
+      <span class="tag-chip selectable" data-tag="Core">Core</span>
+      <span class="tag-chip selectable" data-tag="Cardio">Cardio</span>
+    </div>
+    <div id="picker-list" class="picker-list"></div>
+  </div>
+</div>
+
+<!-- Template Modal -->
+<div id="modal-template" class="modal-overlay hidden">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2 id="template-modal-title">New Template</h2>
+      <button class="modal-close icon-btn">✕</button>
+    </div>
+    <label class="field-label">Template Name</label>
+    <input type="text" id="tmpl-name" class="input" placeholder="e.g. Push Day A" />
+    <label class="field-label" style="margin-top:12px">Day of Week</label>
+    <select id="tmpl-day" class="input select">
+      <option value="">— Any day —</option>
+      <option value="0">Sunday</option>
+      <option value="1">Monday</option>
+      <option value="2">Tuesday</option>
+      <option value="3">Wednesday</option>
+      <option value="4">Thursday</option>
+      <option value="5">Friday</option>
+      <option value="6">Saturday</option>
+    </select>
+    <div id="tmpl-exercises-container" style="margin-top:12px"></div>
+    <button id="btn-tmpl-add-exercise" class="btn btn-outline full-width" style="margin-top:8px">+ Add Exercise</button>
+    <div class="action-row" style="margin-top:16px">
+      <button id="btn-save-template" class="btn btn-primary btn-lg full-width">💾 Save Template</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rest Timer Modal -->
+<div id="modal-timer" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2>Rest Timer</h2>
+      <button class="modal-close icon-btn">✕</button>
+    </div>
+    <div id="timer-display" class="timer-display">1:30</div>
+    <div class="timer-presets">
+      <button class="btn btn-outline btn-sm" data-secs="30">30s</button>
+      <button class="btn btn-outline btn-sm" data-secs="60">1m</button>
+      <button class="btn btn-outline btn-sm" data-secs="90">1:30</button>
+      <button class="btn btn-outline btn-sm" data-secs="120">2m</button>
+      <button class="btn btn-outline btn-sm" data-secs="180">3m</button>
+    </div>
+    <div class="action-row" style="margin-top:12px; gap:8px">
+      <button id="btn-timer-start" class="btn btn-primary">▶ Start</button>
+      <button id="btn-timer-reset" class="btn btn-outline">↺ Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- Workout Detail Modal -->
+<div id="modal-workout-detail" class="modal-overlay hidden">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2 id="detail-title">Workout</h2>
+      <button class="modal-close icon-btn">✕</button>
+    </div>
+    <div id="detail-content"></div>
+    <div class="action-row" style="margin-top:16px; gap:8px; flex-wrap:wrap">
+      <button id="btn-detail-duplicate" class="btn btn-outline">📋 Duplicate</button>
+      <button id="btn-detail-delete" class="btn btn-danger">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Exercise Add/Edit Modal -->
+<div id="modal-exercise-form" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="ex-modal-title">Add Exercise</h2>
+      <button class="modal-close icon-btn">✕</button>
+    </div>
+
+    <label class="field-label">Exercise Name *</label>
+    <input type="text" id="ex-modal-name" class="input" placeholder="e.g. Cable Fly, Nordic Curl…" autocomplete="off" />
+
+    <label class="field-label" style="margin-top:12px">Muscle Group *</label>
+    <select id="ex-modal-muscle" class="input select">
+      <option value="Chest">Chest</option>
+      <option value="Back">Back</option>
+      <option value="Shoulders">Shoulders</option>
+      <option value="Arms">Arms</option>
+      <option value="Legs">Legs</option>
+      <option value="Core">Core</option>
+      <option value="Cardio">Cardio</option>
+    </select>
+
+    <label class="field-label" style="margin-top:12px">Equipment</label>
+    <input type="text" id="ex-modal-equipment" class="input" placeholder="e.g. Machine, Barbell, Dumbbell, Cable, Bodyweight…" />
+
+    <div class="action-row" style="margin-top:20px">
+      <button id="btn-save-exercise" class="btn btn-primary btn-lg full-width">💾 Save Exercise</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="modal-settings" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Settings</h2>
+      <button class="modal-close icon-btn">✕</button>
+    </div>
+    <label class="field-label">Weight Unit</label>
+    <select id="setting-unit" class="input select">
+      <option value="kg">Kilograms (kg)</option>
+      <option value="lbs">Pounds (lbs)</option>
+    </select>
+    <label class="field-label" style="margin-top:12px">Default Rest Timer</label>
+    <select id="setting-rest" class="input select">
+      <option value="60">1 minute</option>
+      <option value="90">1.5 minutes</option>
+      <option value="120">2 minutes</option>
+      <option value="180">3 minutes</option>
+    </select>
+    <div style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px">
+      <div class="card-title">Data Management</div>
+      <div class="action-row" style="gap:8px; flex-wrap:wrap; margin-top:8px">
+        <button id="btn-export" class="btn btn-outline">⬇ Export JSON</button>
+        <label class="btn btn-outline" style="cursor:pointer">
+          ⬆ Import JSON
+          <input type="file" id="btn-import" accept=".json" style="display:none" />
+        </label>
+        <button id="btn-clear-data" class="btn btn-danger">🗑 Clear All Data</button>
+      </div>
+    </div>
+    <div style="margin-top:16px; text-align:center; color:var(--text-muted); font-size:0.8rem">
+      GymTrack v1.0 — All data stored locally
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="js/db.js"></script>
+<script src="js/data.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/log.js"></script>
+<script src="js/history.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/plan.js"></script>
+<script src="js/exercises.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

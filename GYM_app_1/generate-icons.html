@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator</title></head>
+<body>
+<p>Generating icons... check the download folder.</p>
+<canvas id="c192" width="192" height="192" style="display:none"></canvas>
+<canvas id="c512" width="512" height="512" style="display:none"></canvas>
+<script>
+function drawIcon(canvas) {
+  const ctx = canvas.getContext('2d');
+  const s = canvas.width;
+  const r = s * 0.2;
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.lineTo(s - r, 0);
+  ctx.quadraticCurveTo(s, 0, s, r);
+  ctx.lineTo(s, s - r);
+  ctx.quadraticCurveTo(s, s, s - r, s);
+  ctx.lineTo(r, s);
+  ctx.quadraticCurveTo(0, s, 0, s - r);
+  ctx.lineTo(0, r);
+  ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.closePath();
+  ctx.fillStyle = '#e63946';
+  ctx.fill();
+  ctx.font = `${s * 0.55}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('💪', s / 2, s / 2 + s * 0.04);
+}
+
+['c192', 'c512'].forEach(id => {
+  const c = document.getElementById(id);
+  drawIcon(c);
+  const a = document.createElement('a');
+  a.href = c.toDataURL('image/png');
+  a.download = `icon-${c.width}.png`;
+  document.body.appendChild(a);
+  a.click();
+});
+document.querySelector('p').textContent = 'Done! Place the downloaded icon-192.png and icon-512.png in the icons/ folder.';
+</script>
+</body>
+</html>
